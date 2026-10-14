@@ -1,0 +1,166 @@
+{
+  "protocol_id": "independent_ambiguity_validation_v1",
+  "status": "SYNTHETIC_CHAIN_VERIFIED_EXTERNAL_TIMESTAMP_PENDING",
+  "created_on": "2026-10-14",
+  "claim": "Transfer of a locked quality-only ambiguity gate to previously unused participants under a controlled corruption design",
+  "excluded_claims": [
+    "Natural ambiguity diagnosis",
+    "Clinical reliability",
+    "Improved task error or AURC",
+    "General superiority over published rejection methods"
+  ],
+  "development_data": [
+    "WESAD existing participants only"
+  ],
+  "evaluation_data": {
+    "name": "Wearable Device Dataset from Induced Stress and Structured Exercise Sessions",
+    "version": "1.0.1",
+    "doi": "10.13026/he0v-tf17",
+    "scope": "STRESS sessions only",
+    "status": "SELECTED_DOWNLOADED_QUARANTINED_UNEVALUATED",
+    "download_audit_sha256": "82f58b0c11574f1b3192c8e551c81f5bf4f5eaa6da1af7ec02c784ce92df4337"
+  },
+  "evaluation_participant_overlap_allowed": false,
+  "outcome_access_before_freeze_allowed": false,
+  "operating_policy": {
+    "features": "four modality quality deficits plus largest two deficits, deficit sum and normalized deficit entropy",
+    "target": "designed two-modality regime, not task error",
+    "model": "participant-weighted L2 logistic regression",
+    "penalties": [
+      0.01,
+      0.1,
+      1.0,
+      10.0
+    ],
+    "tuning": "development participant-disjoint cross-fitting only",
+    "threshold_rule": "median development cross-fitted ambiguous risk; reject score >= threshold",
+    "retained_assertion": "unique positive quality-deficit maximum; tied or zero maximum unresolved",
+    "external_refitting_or_recalibration_allowed": false,
+    "final_model_artifact": "Transfer model fingerprint recorded; restricted local lineage kept separately",
+    "final_model_sha256": "23343240624a5123fe7fa74ad9b59ee688fdbf472c0359f9ff407cf11da48228",
+    "quality_bounds": "Fit participant-equal natural WESAD bounds on all 15 development participants; no external fitting",
+    "tuning_limitation": "Only logistic fit is group-cross-fitted; bounds fixed using all development participants. No unbiased full-pipeline cross-validation estimate."
+  },
+  "comparison": {
+    "primary": "locked learned quality gate minus quality-only",
+    "ambiguity_endpoint": "false unique positive assertion on designed two-modality cases; all cases denominator",
+    "retention_endpoint": "correct unique positive assertion on single-modality cases; all cases denominator",
+    "estimand": "equal participant means; seeds averaged within participant",
+    "success_requires_both_endpoints": true,
+    "retention_noninferiority_margin_percentage_points": 5.0,
+    "minimum_relevant_ambiguity_reduction_percentage_points": 0.0,
+    "statistical_plan_status": "FIXED_BEFORE_EXTERNAL_SIGNAL_PARSING",
+    "pool_with_retrospective_results": false,
+    "margin_justification": "User accepted a pragmatic maximum loss of five percentage points before new evaluation outcomes; not an established scientific or clinical standard.",
+    "benefit_definition": "Statistically supported reduction greater than zero; no universal minimum practical benefit is asserted",
+    "primary_inference": {
+      "unit": "participant; paired gate-minus-quality rates, seeds averaged first",
+      "method": "Student-t mean paired-difference interval, two-sided 95 percent; approximate under independent participant sampling",
+      "ambiguity_success": "upper CI strictly < 0",
+      "retention_success": "lower CI strictly > -0.05",
+      "joint_success": "both criteria must pass; no success if either inconclusive or failed",
+      "zero_variance_rule": "Use full possible difference range [-1,1]; do not claim perfect certainty",
+      "insufficient_participants_rule": "fewer than 2 => no inference or success",
+      "multiple_testing": "One locked comparator and conjunctive co-primary decision; no selection among methods/endpoints. Other analyses descriptive only",
+      "sensitivity": "10000 participant bootstrap replicates, seed 20261015; report without replacing primary result",
+      "assumptions": "Participant independence; approximate t intervals for bounded non-normal rates. Bootstrap sensitivity does not establish exact finite-sample validity",
+      "reference": "https://www.itl.nist.gov/div898/handbook/eda/section3/eda352.htm"
+    }
+  },
+  "controls": {
+    "source_selection": "deterministic hash selection after participant enrollment inventory, without scores or labels",
+    "paired_source_and_severity": true,
+    "noise_realizations": "independent, as in development; not isolated causal effect of adding second fault",
+    "operator": "mild additive noise with frozen development implementation",
+    "operator_configuration_sha256": "a08eb21dbc3eabd13da2a53e3acba6114d8e32acaa2b8141c7b97220d06fe7e9",
+    "natural_quality_certification": false,
+    "exclude_based_on_gate_output": false,
+    "noise_snr_db": 20.0,
+    "sources_per_participant": 24,
+    "window_seconds": 10,
+    "window_stride_seconds": 10,
+    "minimum_sources_for_participant": 24,
+    "source_selection_rule": "Rank all complete finite nonoverlapping synchronized windows by SHA256 of protocol_id|canonical_participant|recording|start_seconds; take first 24, no quality/score/label filtering",
+    "modality_design": "12 ordered distinct modality pairs, repeated twice over 24 hash-ranked sources; pair order acc,bvp,eda,temp lexical loops; single corrupts first modality, ambiguous both",
+    "noise_seeds": [
+      7,
+      42,
+      101
+    ],
+    "noise_seed_derivation": "first 8 hex digits of SHA256(protocol_id|participant|recording|start_seconds|replicate_seed|regime|modality)",
+    "paired_noise": "Independent noise in single versus ambiguous; match source, first modality and SNR only",
+    "dtype": "float32 arrays before injection, float64 noise arithmetic via existing inject_fault",
+    "finite_window_rule": "Exclude windows with any nonfinite input or incomplete channel; no imputation",
+    "no_window_crosses_recording_boundary": true
+  },
+  "sample_size": {
+    "independent_participants_planned_maximum": 34,
+    "status": "FIXED_AVAILABLE_COHORT_ALL_TECHNICALLY_ELIGIBLE_PARTICIPANTS_NO_OPTIONAL_STOPPING",
+    "windows_and_seeds_are_independent_units": false,
+    "no_target_power_claim": true,
+    "rationale": "36 reported stress volunteers minus two published exclusions; actual eligibility determined solely by frozen technical rules",
+    "precision_sensitivity": "At n=34, t 95 percent half-width = t(.975,33)*SD/sqrt(34). A zero true retention loss needs paired SD below roughly 0.143 for expected lower limit to exceed -0.05; this is not an 80 percent joint power guarantee",
+    "no_post_outcome_sample_extension": true
+  },
+  "freeze_requirements": [
+    "Design and margin finalized",
+    "Development model and quality bounds hashed",
+    "Downloaded raw-file hash inventory verified without parsing",
+    "External timestamp of final public protocol package before evaluation",
+    "Evaluation implementation verified using synthetic inputs before real signals"
+  ],
+  "execution_allowed": false,
+  "public_outputs": "aggregate only; raw and participant-level records remain local",
+  "preprocessing": {
+    "rates_hz": {
+      "acc": 32,
+      "bvp": 64,
+      "eda": 4,
+      "temp": 4
+    },
+    "channels": {
+      "acc": 3,
+      "bvp": 1,
+      "eda": 1,
+      "temp": 1
+    },
+    "signal_start": "Parse documented UTC start per channel, align on intersection of valid record extents",
+    "sample_alignment": "Grid starts at first common timestamp; reject channel grids offset by non-integer sample counts; no interpolation",
+    "rate_mismatch": "Exclude recording rather than resample or tune",
+    "acc_units": "Keep native 1/64g raw values; WESAD development pkl retains this scale. Do not divide by 64",
+    "eda_units": "microsiemens",
+    "temp_units": "degrees Celsius",
+    "bvp_units": "native E4 output",
+    "normalization": "None for quality-only gate; apply frozen raw-domain quality bounds",
+    "task_labels": "Not read or used; this is controlled culprit-assignment transfer, not stress-classification validation",
+    "tags": "Not used for outcome/source selection; no stress/rest subgroup efficacy claim"
+  },
+  "eligibility": {
+    "published_exclusions": {
+      "count": 2,
+      "criterion": "Exclude duplicated-record participant and participant with covered PPG/TEMP per publisher data_constraints.txt"
+    },
+    "canonical_participant": "Strip _a/_b suffix; names are dataset-qualified, not matched to similarly named WESAD IDs",
+    "split_records": "Split records from one released participant remain grouped; never concatenate across recording gaps",
+    "insufficient_complete_windows": "Exclude participant if fewer than 24 after predetermined technical validity checks; retain reason",
+    "no_score_based_exclusions": true,
+    "participant_overlap_evidence": "Separate published cohorts; matching pseudonymous codes across datasets do not imply same person. Direct individual identity matching is unavailable",
+    "prior_project_use": "No matching source/name/DOI in searched local manifests/docs; not independently audited proof",
+    "intended_population": "eligible released stress-session cohort only; convenience cohort, not general wearable population"
+  },
+  "local_design_finalized_utc": "2026-10-14T14:21:10.255471+00:00",
+  "externally_timestamped": false,
+  "public_package_note": "Contains design and aggregate metadata only; no raw signals or participant-level results. Prepared locally, not uploaded or preregistered.",
+  "synthetic_verification": {
+    "report": "reports/imwut_2026/independent_validation_preparation_v1/synthetic_verification_audit.json",
+    "status": "PASS",
+    "records_per_process": 1152,
+    "software_tests_passed": 370
+  },
+  "implementation_specification": {
+    "timestamp_serialization": "nine digits after decimal in source/noise SHA token",
+    "grid_alignment_absolute_tolerance_samples": 1e-05,
+    "primary_ci_bounds": "Clip t intervals to possible participant difference range [-1,1]",
+    "implementation_real_csv_ingestion_not_yet_verified": true
+  }
+}
