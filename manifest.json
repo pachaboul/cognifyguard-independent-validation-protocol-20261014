@@ -1,0 +1,8 @@
+{
+  "protocol.json": "2a8f339e8e4deca55e9ba7d5d79a05b69c6684eec628389b722a343a04973616",
+  "scripts/verify_independent_ambiguity_synthetic.py": "cf8394a9ffa37fb990ae762204497cc7a43d3b3fe700ed6466b175dce2df9c90",
+  "src/cognifyguard/independent_ambiguity.py": "9a8cb8f9f4e5f27d2a1c9f10811b187f87d4c65a06bb0329e58e7aea43a3b063",
+  "tests/test_independent_ambiguity.py": "09056d085ff192ec005208f333429d4a3d76cc0273712602b5356511f5eba80e",
+  "transfer_parameters.json": "71f8c7f901fbe28d10e4bb59bf51258608377705557e4797d3123aa1ecf51b6c",
+  "verification_summary.json": "3354ad86d7fe143ae50cdf5b9c8da0a757abe6f36d5c0fde1defd2e10a3b8b01"
+}
