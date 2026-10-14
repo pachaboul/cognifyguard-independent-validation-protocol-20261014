@@ -1,0 +1,81 @@
+{
+  "development_records": 600,
+  "feature_dimension": 8,
+  "final_fits": 1,
+  "inner_fits": 60,
+  "limitations": [
+    "All WESAD participants are development data, not fresh confirmation",
+    "Quality bounds use all development participants; only logistic fit is group-cross-fitted",
+    "No unbiased full-pipeline cross-validation estimate is claimed",
+    "No external signals accessed; transfer remains untested"
+  ],
+  "model": {
+    "constant_probability": null,
+    "mean": [
+      0.06845767117957889,
+      0.00034428382873468463,
+      0.176458859736654,
+      0.3750003433227538,
+      0.5848627546914488,
+      0.035398327082326854,
+      0.6202611580677208,
+      0.05962035311402656
+    ],
+    "parameters": [
+      0.11510630602558769,
+      0.10445675522517628,
+      0.05499672395534017,
+      0.12358689582852105,
+      0.12575278514178628,
+      0.19588893036496352,
+      0.3574035215376498,
+      0.24088165001721967,
+      0.4507899963978031
+    ],
+    "penalty": 0.1,
+    "rejection_threshold": 0.5391272996605638,
+    "scale": [
+      0.11316458853121876,
+      0.006028587933798164,
+      0.3660344283550286,
+      0.4841226523471865,
+      0.45580110490382186,
+      0.08109217320077443,
+      0.4909846347864054,
+      0.1264492406803697
+    ],
+    "status": "converged"
+  },
+  "quality_upper_bounds": {
+    "acc": {
+      "acc_jerk_median": 3.0520319582242137,
+      "acc_magnitude_std": 10.882673128543233,
+      "max_abs_step": 101.0,
+      "missing_ratio": 0.0,
+      "robust_spike_ratio": 0.3333333333333333
+    },
+    "bvp": {
+      "absolute_motion_coupling": 0.6052722112764146,
+      "longest_constant_run_ratio": 0.003125,
+      "max_abs_step": 118.76,
+      "missing_ratio": 0.0,
+      "rail_occupancy_ratio": 0.0046875,
+      "robust_spike_ratio": 0.0671875
+    },
+    "eda": {
+      "absolute_motion_coupling": 0.6315744201444466,
+      "longest_constant_run_ratio": 0.175,
+      "max_abs_step": 0.17268899999999987,
+      "missing_ratio": 0.0,
+      "rail_occupancy_ratio": 0.3,
+      "robust_spike_ratio": 0.125
+    },
+    "temp": {
+      "absolute_motion_coupling": 0.43642907193890107,
+      "longest_constant_run_ratio": 0.85,
+      "max_abs_step": 0.060000000000002274,
+      "missing_ratio": 0.0,
+      "robust_spike_ratio": 0.0
+    }
+  }
+}
