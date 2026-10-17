@@ -1,0 +1,27 @@
+{
+  "protocol_id": "nurses_ssl_external_v1",
+  "amends_file": "nurses_ssl_external_v1/protocol.json",
+  "amends_commit": "c7c25c28efd4ed6a904de81601ca4ac68d40d3e2",
+  "status": "PREOUTCOME_AMENDMENT_SIGNAL_CONTENT_NOT_READ",
+  "reason": "The publisher documentation describes E4 files with a recording start epoch and sampling-frequency header; it does not guarantee per-sample timestamps. The original gap rule must therefore be conditional on timestamp availability.",
+  "replacement_timing_rule": {
+    "if_per_sample_timestamps_exist": "Align using the four-channel timestamp intersection; require positive intervals and no interval greater than 1.5 times the within-file median. Do not interpolate across observed gaps.",
+    "if_only_start_epoch_and_rate_headers_exist": "Construct the sample grid from the file start epoch, declared sampling rate, and row order. Require nonempty files, valid positive rate metadata, and starts aligned within half a target sample on the common grid. Treat rows as consecutive at the documented rate; sample loss cannot be detected and must be disclosed.",
+    "permitted_rates_hz": {"ACC": 32, "BVP": 64, "EDA": 4, "TEMP": [1, 4]},
+    "conversion": "ACC m/s^2 to WESAD raw 1/64-g counts: value * 64 / 9.80665; BVP unchanged; EDA in microSiemens unchanged; TEMP Celsius unchanged. Resample deterministically to 32/64/4/4 Hz using scipy.signal.resample_poly, Kaiser beta 5, denominator limit 10000. TEMP 1-to-4 Hz upsampling adds no measured bandwidth."
+  },
+  "preflight_eligibility": "All four required files must be nonempty; headers/rates/units must meet the fixed contract; candidate windows must be finite. Report every excluded recording. Retain the ≥100 sampled windows/person and ≥10 eligible participants gates. No signal-quality, label, or outcome-based screening.",
+  "scope_unchanged": {
+    "read_only_channels": ["ACC.csv", "BVP.csv", "EDA.csv", "TEMP.csv"],
+    "annotations_or_task_labels_read": false,
+    "target_retraining_or_calibration": false,
+    "fault operators_and_inference": "unchanged from protocol.json"
+  },
+  "archive_state_at_amendment": {
+    "partial_compressed_archive_bytes_downloaded": true,
+    "archive_members_opened": false,
+    "signal_values_read": false,
+    "model_outcomes_read": false
+  },
+  "reason_for_amendment_timing": "This amendment was made after a partial compressed transfer but before opening any archive member or reading any signal value; it corrects only the source-format assumption and does not follow outcome inspection."
+}
