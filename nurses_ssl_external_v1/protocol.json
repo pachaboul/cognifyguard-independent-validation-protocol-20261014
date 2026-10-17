@@ -1,0 +1,63 @@
+{
+  "protocol_id": "nurses_ssl_external_v1",
+  "status": "PREOUTCOME_PROTOCOL_FROZEN_SIGNALS_NOT_ACCESSED",
+  "dataset": {
+    "name": "A multi-modal sensor dataset for continuous stress detection of nurses in a hospital",
+    "doi": "10.5061/dryad.5hqbzkh6f",
+    "version": "Dryad files published 2021-09-17; pinned dataset DOI, no newer version asserted",
+    "participants_reported": 15,
+    "device": "Empatica E4",
+    "required_signals": ["ACC", "BVP", "EDA", "TEMP"],
+    "excluded_files": ["SurveyResults.xlsx", "tags.csv", "HR.csv", "IBI.csv", "all stress/task/survey annotations"]
+  },
+  "purpose": "External SSL-only transfer of frozen WESAD-trained fault-rejection scores to naturalistic E4 work-shift signals with deterministic synthetic perturbations; no stress/task prediction.",
+  "scope": {
+    "labels_or_human_ratings": false,
+    "task_or_stress_prediction": false,
+    "target_retraining": false,
+    "target_normalization_or_calibration": false,
+    "target_threshold_fitting": false
+  },
+  "frozen_models": {
+    "ssl": "All nine WESAD-only compact native PhysioME-inspired v7 fold/seed checkpoints and both fixed scores: physiome_raw_1nn and physiome_restoration",
+    "primary_comparator": "The nine previously selected WESAD-only derivative_roughness_hybrid fold/seed artifacts",
+    "thresholds": "Existing WESAD-only calibration ranks and frozen assignment rules; no tuning on nurse data"
+  },
+  "signal_preprocessing": {
+    "read_only_files": ["ACC.csv", "BVP.csv", "EDA.csv", "TEMP.csv"],
+    "units": {
+      "acc": "Source documentation reports m/s^2; convert to WESAD raw 1/64-g counts as (m/s^2) * 64 / 9.80665",
+      "bvp": "Raw E4 BVP values, unchanged",
+      "eda": "Raw E4 microSiemens, unchanged",
+      "temp": "Degrees Celsius, unchanged"
+    },
+    "target_rates_hz": {"acc": 32, "bvp": 64, "eda": 4, "temp": 4},
+    "rate_conversion": "Read source rate and timestamps from signal files only; deterministic scipy.signal.resample_poly, Kaiser beta 5, rational ratio limited to denominator 10000. If TEMP is 1 Hz, upsample deterministically to 4 Hz; this does not add measured bandwidth and must be disclosed. Stop before outcomes if source metadata cannot support this fixed conversion.",
+    "alignment": "Within each recording, use timestamp overlap of the four E4 channels only; no extrapolation, gap filling, or interpolation across gaps. Drop incomplete 10-second windows only.",
+    "window_sampling": "Select one 10-second window from each consecutive 10-minute eligible recording block. Select the within-block 10-second slot deterministically from SHA256(participant pseudonym, recording ordinal, block ordinal, protocol seed 20261017); no labels or signal values influence selection. Keep all eligible sampled windows.",
+    "eligibility": "A recording is signal-eligible only when all four signal files are nonempty, finite over candidate windows, have positive timestamps and no interval greater than 1.5 times their within-file median interval. Report every excluded recording and reason. Include participants with at least 100 eligible sampled windows; report all counts. Require at least 10 eligible participants before scoring or stop as technically underpowered/ineligible.",
+    "normalization": "Use only each frozen model's WESAD training-fold moments; estimate no nurse-cohort moments."
+  },
+  "analysis": {
+    "faults": "Apply frozen structured_faults_v3: drift, source-relative range clipping, sample hold, and mean-imputed gap, each at low/medium/high levels. All four single-modality targets are primary; six pair targets, no-ops, and clean windows are descriptive/secondary.",
+    "randomization": "Use deterministic source/window/family/modality fault seed rule from structured_faults_v3, extended by stable recording ordinal; record exact extension and verify repeatability before outcome scoring.",
+    "primary_endpoint": "Participant-equal, equal-modality standardized fault-excess MSE among retained sampled nonzero-dose single-fault windows at each frozen WESAD threshold. Average recording then model fold/seed results within participant before inference.",
+    "primary_contrasts": ["physiome_raw_1nn minus derivative_roughness_hybrid", "physiome_restoration minus derivative_roughness_hybrid"],
+    "coverage_guard": "For each SSL score, the participant-bootstrap one-sided 95% lower confidence bound for paired coverage difference versus hybrid must exceed -0.05 (five percentage points). Report unmodified-window alert rates and all modality/fault coverage.",
+    "zero_coverage_rule": "If any participant has zero retained windows in any required modality for an SSL score, that score's primary selective-risk contrast is NOT ESTIMABLE and automatically fails the joint success rule. Do not impute risk, remove the participant, or compute a confirmatory selective-risk p-value for that score.",
+    "inference": "Participant is the inference unit. Paired participant bootstrap (10000 replicates, seed 20261017), percentile 95% intervals; paired two-sided sign-flip test (100000 flips, seed 20261018) for the two risk contrasts with Holm correction. Coverage guard uses paired participant bootstrap with a one-sided 95% lower bound. No window-level inferential tests.",
+    "success_rule": "At least one frozen SSL score must have an estimable selective-risk contrast, lower risk than the hybrid with Holm-adjusted two-sided p < 0.05, and pass the 5-point coverage noninferiority guard. Otherwise report failure without selecting a threshold or score post hoc.",
+    "secondary": ["risk/coverage by modality and fault family/level", "localization", "pair-fault detection", "unmodified-window rejection", "eligible natural recording duration and exclusions"],
+    "limits": ["Injected faults do not establish natural artifact detection or natural signal quality", "One hospital system and 15 female nurses limit transportability", "Repeated windows/recordings are clustered within 15 participants", "No stress, emotion, clinical, or occupational outcome claim"]
+  },
+  "preflight_gates": [
+    "Before reading any signal values, verify the dataset archive inventory and exclude SurveyResults.xlsx, tags.csv, HR.csv, IBI.csv, and all other annotations from extraction and parsing.",
+    "Verify file metadata, actual rates, units, timestamp alignment, nonempty recording counts, coverage, and deterministic conversion on signal files only.",
+    "If units/rates or alignment cannot meet the frozen conversion without additional assumptions, stop and report technical ineligibility before model outcomes.",
+    "Do not screen recordings using stress/task labels, model outputs, or outcomes."
+  ],
+  "source": "https://doi.org/10.5061/dryad.5hqbzkh6f",
+  "paper": "https://doi.org/10.1038/s41597-022-01361-y",
+  "model_source": "reports/imwut_2026/ssl_physiome_v7/selection_lock.json",
+  "comparator_source": "reports/imwut_2026/ssl_mechanism_development_v2/selection_lock.json"
+}
