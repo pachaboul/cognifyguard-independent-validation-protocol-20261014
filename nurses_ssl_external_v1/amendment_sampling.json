@@ -1,0 +1,24 @@
+{
+  "protocol_id": "nurses_ssl_external_v1",
+  "amends_commit": "c6909b7ffd2e53deb7cdf32c7e85d21940cfab92",
+  "status": "PREOUTCOME_AMENDMENT_SIGNAL_CONTENT_NOT_READ",
+  "window_sampling": {
+    "block_seconds": 600,
+    "window_seconds": 10,
+    "windows_per_block": 1,
+    "participant_token": "first 16 hex chars of SHA256(lowercase canonical participant-folder identifier)",
+    "recording_ordinal": "zero-based lexical order of recording folder paths within participant",
+    "block_ordinal": "zero-based from common four-channel recording start",
+    "key": "nurses_ssl_external_v1|{participant_token}|{recording_ordinal:04d}|{block_ordinal:06d}|20261017",
+    "slot": "int(first 8 hex digits of SHA256(UTF-8 key), base 16) mod 60",
+    "window_start": "block_start + 10*slot seconds",
+    "selection_uses_signal_values_labels_or_outcomes": false
+  },
+  "archive_state": {
+    "partial_compressed_archive_downloaded": true,
+    "archive_members_opened": false,
+    "signal_values_read": false,
+    "model_outcomes_read": false
+  },
+  "reason": "Clarifies the deterministic sampling serialization before opening any archive member; no analysis or eligibility rule changes."
+}
