@@ -8,6 +8,7 @@ import json
 import math
 import sys
 from collections import defaultdict
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
 
 import numpy as np
@@ -30,6 +31,9 @@ RATES = {"acc": 32, "bvp": 64, "eda": 4, "temp": 4}
 CHANNELS = {"ACC": "acc", "BVP": "bvp", "EDA": "eda", "TEMP": "temp"}
 OUTCOMES = BASE / "participant_model_scores.csv"
 DEPOSIT_RECEIPT = BASE / "evaluator_deposit_receipt.json"
+PARALLELISM_AMENDMENT = BASE / "parallelism_amendment_deposit_receipt.json"
+PARALLEL_WORKERS = 6
+_WORKER_RECORDS = None
 
 
 def sha(path: Path) -> str:
@@ -250,6 +254,17 @@ def analyze(rows):
         "claim_scope": "Frozen SSL rejection on deterministic synthetic E4 faults only; no natural signal quality or task/stress claims."}
 
 
+def _initialize_worker(records):
+    global _WORKER_RECORDS
+    _WORKER_RECORDS = records
+    torch.set_num_threads(1)
+    torch.use_deterministic_algorithms(True)
+
+
+def _infer_worker(spec):
+    return infer(spec, _WORKER_RECORDS)
+
+
 def main():
     if OUTCOMES.exists():
         raise FileExistsError("Preserve prior evaluation attempts; refusing overwrite")
@@ -275,12 +290,16 @@ def main():
         "configs/neurostress_ssl_external_v1.json",
         "configs/neurostress_ssl_external_v1_format_amendment.json",
         "configs/neurostress_ssl_external_v1_identity_amendment.json",
+        "configs/neurostress_ssl_external_v1_parallelism_amendment.json",
         "reports/imwut_2026/neurostress_ssl_external_v1/signal_only_preflight_v1.json",
+        "reports/imwut_2026/neurostress_ssl_external_v1/partial_attempt_20261018.json",
+        "reports/imwut_2026/neurostress_ssl_external_v1/parallelism_amendment_deposit_receipt.json",
         "reports/imwut_2026/ssl_physiome_v7/selection_lock.json",
         "reports/imwut_2026/ssl_mechanism_development_v2/selection_lock.json"]
     lock = {"status": "FROZEN_PREOUTCOME_INFERENCE_CODE_LOCK", "protocol_id": "neurostress_ssl_external_v1",
         "participant_count": len(records), "window_counts": {t: len(w) for t,w in records.items()},
         "model_count": len(specs), "score_count": 3, "threshold_source": "frozen WESAD calibration, alpha 0.05",
+        "parallel_workers": PARALLEL_WORKERS, "torch_threads_per_worker": 1,
         "annotations_or_task_data_read": False, "target_retraining_normalization_calibration": False,
         "fault_repeatability_pass": True, "all_source_sha256": {p: sha(ROOT/p) for p in source_paths},
         "checkpoint_sha256": {str(s["job"].get("run", s["job"].get("fold"))): s["job"]["checkpoint_sha256"] for s in specs},
@@ -300,16 +319,29 @@ def main():
             raise ValueError("Public evaluator/lock deposit receipt is not verified")
         if receipt.get("evaluator_git_blob_sha") != git_blob_sha(Path(__file__)) or receipt.get("lock_git_blob_sha") != git_blob_sha(lock_path):
             raise ValueError("Local evaluator or execution lock differs from the public pre-score deposit")
-    print(json.dumps({"status":"PREOUTCOME_CODE_LOCK_READY_FOR_PUBLIC_DEPOSIT", "participants":len(records),
-        "total_windows":sum(map(len,records.values())), "models":len(specs)}, indent=2), flush=True)
+        parallelism = json.loads(PARALLELISM_AMENDMENT.read_text())
+        if parallelism.get("status") != "PUBLIC_PREANALYSIS_PERFORMANCE_ONLY_AMENDMENT_VERIFIED":
+            raise ValueError("Public performance-only parallelism amendment is required")
     if "--lock-only" in sys.argv:
+        print(json.dumps({"status":"PREOUTCOME_CODE_LOCK_READY_FOR_PUBLIC_DEPOSIT", "participants":len(records),
+            "total_windows":sum(map(len,records.values())), "models":len(specs)}, indent=2), flush=True)
         return
+    print(json.dumps({"status":"PUBLIC_LOCK_AND_AMENDMENT_VERIFIED_READY_FOR_INFERENCE", "participants":len(records),
+        "total_windows":sum(map(len,records.values())), "models":len(specs), "parallel_workers":PARALLEL_WORKERS}, indent=2), flush=True)
     all_rows = []
     torch.set_num_threads(1)
     torch.use_deterministic_algorithms(True)
-    for i, spec in enumerate(specs, 1):
-        print(f"SCORING_FROZEN_MODEL {i}/{len(specs)} {spec['job'].get('fold')} seed={spec['job'].get('seed')} score={spec['scores']}", flush=True)
-        all_rows.extend(infer(spec, records))
+    print(f"SCORING_FROZEN_MODELS workers={PARALLEL_WORKERS} cpu_threads_per_worker=1 total={len(specs)}", flush=True)
+    with ProcessPoolExecutor(max_workers=PARALLEL_WORKERS, initializer=_initialize_worker,
+                             initargs=(records,)) as pool:
+        futures = {pool.submit(_infer_worker, spec): spec for spec in specs}
+        done = 0
+        for future in as_completed(futures):
+            spec = futures[future]
+            rows = future.result()
+            all_rows.extend(rows)
+            done += 1
+            print(f"FROZEN_MODEL_COMPLETE {done}/{len(specs)} {spec['job'].get('fold')} seed={spec['job'].get('seed')} scores={spec['scores']}", flush=True)
     temp = BASE / "participant_model_scores.csv.partial"
     fields = sorted({k for row in all_rows for k in row})
     with temp.open("w", newline="") as f:
