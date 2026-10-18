@@ -29,6 +29,7 @@ OUTPUT = BASE / "external_evaluation_v1"
 RATES = {"acc": 32, "bvp": 64, "eda": 4, "temp": 4}
 CHANNELS = {"ACC": "acc", "BVP": "bvp", "EDA": "eda", "TEMP": "temp"}
 OUTCOMES = BASE / "participant_model_scores.csv"
+DEPOSIT_RECEIPT = BASE / "evaluator_deposit_receipt.json"
 
 
 def sha(path: Path) -> str:
@@ -37,6 +38,11 @@ def sha(path: Path) -> str:
         for b in iter(lambda: f.read(1024 * 1024), b""):
             h.update(b)
     return h.hexdigest()
+
+
+def git_blob_sha(path: Path) -> str:
+    data = path.read_bytes()
+    return hashlib.sha1(f"blob {len(data)}\0".encode() + data).hexdigest()
 
 
 def load_records():
@@ -245,7 +251,7 @@ def analyze(rows):
 
 
 def main():
-    if OUTCOMES.exists() or (OUTPUT.exists() and "--lock-only" not in sys.argv):
+    if OUTCOMES.exists():
         raise FileExistsError("Preserve prior evaluation attempts; refusing overwrite")
     preflight = json.loads(PREFLIGHT.read_text())
     if preflight["annotations_or_non_e4_signals_read"] or preflight["target_models_retrained_or_refit"]:
@@ -280,8 +286,20 @@ def main():
         "checkpoint_sha256": {str(s["job"].get("run", s["job"].get("fold"))): s["job"]["checkpoint_sha256"] for s in specs},
         "calibration_sha256": {str(s["job"].get("run", s["job"].get("fold"))): s["job"]["calibration_sha256"] for s in specs},
         "limitations": ["E4 CSV headers cannot detect internal dropped rows", "Synthetic structured faults only"]}
-    OUTPUT.mkdir(mode=0o700, parents=True, exist_ok="--lock-only" in sys.argv)
-    (OUTPUT / "execution_lock.json").write_text(json.dumps(lock, indent=2, sort_keys=True) + "\n")
+    lock_path = OUTPUT / "execution_lock.json"
+    OUTPUT.mkdir(mode=0o700, parents=True, exist_ok=True)
+    if "--lock-only" in sys.argv:
+        lock_path.write_text(json.dumps(lock, indent=2, sort_keys=True) + "\n")
+    else:
+        if not lock_path.is_file() or json.loads(lock_path.read_text()) != lock:
+            raise ValueError("Local execution lock differs from the recomputed frozen source/model lock")
+        if not DEPOSIT_RECEIPT.is_file():
+            raise ValueError("Public pre-score evaluator deposit receipt is required")
+        receipt = json.loads(DEPOSIT_RECEIPT.read_text())
+        if receipt.get("status") != "PUBLIC_PREOUTCOME_EVALUATOR_LOCK_VERIFIED":
+            raise ValueError("Public evaluator/lock deposit receipt is not verified")
+        if receipt.get("evaluator_git_blob_sha") != git_blob_sha(Path(__file__)) or receipt.get("lock_git_blob_sha") != git_blob_sha(lock_path):
+            raise ValueError("Local evaluator or execution lock differs from the public pre-score deposit")
     print(json.dumps({"status":"PREOUTCOME_CODE_LOCK_READY_FOR_PUBLIC_DEPOSIT", "participants":len(records),
         "total_windows":sum(map(len,records.values())), "models":len(specs)}, indent=2), flush=True)
     if "--lock-only" in sys.argv:
