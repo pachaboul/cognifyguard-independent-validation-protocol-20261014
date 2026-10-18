@@ -1,0 +1,74 @@
+{
+  "protocol_id": "neurostress_ssl_external_v1",
+  "status": "PREOUTCOME_PROTOCOL_DRAFT_NOT_DEPOSITED_NO_SIGNALS_READ",
+  "dataset": {
+    "name": "Neurophysiological Dataset of Stress Resilience During Human-Computer Interaction",
+    "source": "PhysioNet",
+    "version": "1.0.0",
+    "doi": "10.13026/x3vc-p627",
+    "reported_participants": 35,
+    "device": "Empatica E4 wristband",
+    "allowed_files": ["ACC.csv", "BVP.csv", "EDA.csv", "TEMP.csv"],
+    "excluded_files_and_content": [
+      "tags.csv and all event markers",
+      "IBI.csv and HR.csv",
+      "EEG, fNIRS, eye-tracking, MATB-II and other task data",
+      "demographicCDrisk.csv, resilience scales, and all task/stress/resilience annotations"
+    ],
+    "license": "Open Data Commons Open Database License v1.0; cite PhysioNet dataset and respect attribution/share-alike obligations",
+    "candidate_assessment": "Metadata-only local search found no reference to this dataset in project configs, manifests, decision documents, or dataset catalog. This does not prove prior-use lineage outside the searched project. No target signal values have been read."
+  },
+  "purpose": "Frozen-weight, signal-only transfer of WESAD-trained SSL rejection scores to an independent E4 collection using deterministic injected faults; no stress, task, resilience, clinical, or performance prediction.",
+  "scope": {
+    "task_or_stress_labels_read": false,
+    "human_annotations_or_raters": false,
+    "target_retraining": false,
+    "target_normalization_or_calibration": false,
+    "target_threshold_fitting": false,
+    "target_based_model_or_score_selection": false
+  },
+  "frozen_models": {
+    "ssl": "All nine WESAD-only compact native PhysioME-inspired v7 fold/seed checkpoints; both fixed scores: physiome_raw_1nn and physiome_restoration",
+    "comparator": "The nine previously selected WESAD-only derivative_roughness_hybrid fold/seed artifacts",
+    "normalization_and_thresholds": "Use only the matching frozen WESAD training moments, WESAD calibration ranks at alpha 0.05, and existing frozen assignment rules; do not refit or retune. Verify checkpoint hashes against the frozen v7 manifests before any target inference."
+  },
+  "signal_preprocessing": {
+    "source_scope": "Download and inventory only the PhysioNet PPG/E4 folder. Read only the four allowed E4 signal files. No broad archive extraction. Preserve the publisher archive and member hashes.",
+    "windowing": "Use every complete, non-overlapping 10-second segment on the four-channel common time intersection. Start at the first common timestamp. Do not inspect task/event markers or select by signal/model outcome. Do not interpolate across timestamp gaps.",
+    "native_rates_hz_expected_from_device": {"acc": 32, "bvp": 64, "eda": 4, "temp": 4},
+    "rate_rule": "Read published per-file metadata and sample timestamps. Accept native 32/64/4/4 Hz; otherwise use deterministic anti-aliased rational resample_poly conversion to those model rates only if timestamps establish the actual rate, with Kaiser beta 5 and denominator limit 10000. Stop before scoring if timestamps/rates are absent, ambiguous, inconsistent, or outside validated conversions.",
+    "unit_rule": "Use file metadata/PhysioNet README to establish units. Convert only documented E4 accelerometer units to the frozen WESAD raw-count convention (64 counts/g). Keep BVP, EDA and TEMP in documented native units. Stop before scoring if any conversion would rely on signal-value heuristics or undocumented assumptions.",
+    "alignment_and_eligibility": "Use per-sample timestamps and their intersection. Require finite values, strictly increasing timestamps, at least 100 eligible windows per included participant, and no gap >1.5 times the within-file median interval. Report every excluded participant/recording and reason. Require at least 10 eligible participants; otherwise stop before scoring.",
+    "normalization": "Use each frozen model's own WESAD training-fold channel moments; estimate no cohort statistics."
+  },
+  "analysis": {
+    "inference_unit": "participant; first average recordings and frozen fold/seed models within participant",
+    "faults": "Apply the unchanged structured_faults_v3 operators: drift, source-relative range clipping, sample hold, and mean-imputed gap, each at low/medium/high severity. Single-modality targets are primary; pair targets, no-ops, clean windows, and per-family breakdowns are secondary/descriptive.",
+    "fault_seed": "Use the frozen structured_faults_v3 deterministic source/window/family/modality SHA256 seed rule, with participant token and zero-based common-window index. No labels or outcomes affect fault generation.",
+    "primary_endpoint": "Participant-equal mean standardized fault-excess MSE among retained sampled nonzero-dose single-fault windows, with equal modality weighting and fixed WESAD scales, at each frozen WESAD threshold.",
+    "primary_contrasts": [
+      "physiome_raw_1nn minus derivative_roughness_hybrid",
+      "physiome_restoration minus derivative_roughness_hybrid"
+    ],
+    "coverage_guard": "For each SSL score, the participant-bootstrap one-sided 95% lower confidence bound for paired coverage difference versus hybrid must be greater than -0.05.",
+    "zero_coverage_rule": "If any included participant has zero retained windows in any required modality for an SSL score, that score's primary selective-risk contrast is non-estimable and fails the joint rule. Do not impute risk or remove the participant.",
+    "inference": "Participant-paired bootstrap with 10000 resamples and seed 20261017; percentile 95% intervals. Paired sign-flip test with 100000 flips and seed 20261018 for two primary risk contrasts; Holm correction. No window-level inference.",
+    "success_rule": "At least one frozen SSL score must yield an estimable lower selective risk than the simple hybrid with Holm-adjusted two-sided p < 0.05 and pass the five-percentage-point coverage guard. Otherwise the independent confirmation fails; do not select a score or threshold post hoc.",
+    "limitations": [
+      "Designed perturbations are not natural unusability, sensor failure, or task harm",
+      "A positive result would confirm only frozen synthetic-fault transfer in this cohort",
+      "No task, stress, resilience, clinical, glucose, or performance claim",
+      "Participant sample size, protocol context, and eligibility are reported; windows are not independent replicates",
+      "No protocol change after target signal values or model outcomes are inspected"
+    ]
+  },
+  "preflight_stop_gates": [
+    "Before signal values are parsed or model scores computed, verify this exact protocol's public deposit, dataset version, allowed-file inventory, archive integrity, model hashes, and release license.",
+    "Read only ACC/BVP/EDA/TEMP; do not open task markers, stress labels, questionnaires, demographics, HR/IBI, EEG/fNIRS, MATB-II or eye-tracking files.",
+    "Verify actual units, time formats, rates, synchronization, coverage, participant count and deterministic unit/rate conversion using signals only. Stop before scoring on any unresolved ambiguity.",
+    "No threshold refitting, model selection, cohort normalization, target training, or post-outcome protocol amendment."
+  ],
+  "dataset_url": "https://physionet.org/content/neuro-stress-resilience-hci/1.0.0/",
+  "paper_url": "https://physionet.org/content/neuro-stress-resilience-hci/1.0.0/",
+  "external_deposit_required_before_signal_access": true
+}
