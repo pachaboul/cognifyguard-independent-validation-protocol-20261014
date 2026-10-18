@@ -1,0 +1,42 @@
+{
+  "amendment_id": "neurostress_ssl_external_v1_header_format_amendment",
+  "protocol_id": "neurostress_ssl_external_v1",
+  "parent_protocol_sha256": "b5d96b7284421aa4be9c9b172ddf284e77db99124773dda6fde5f5ea7bee7a20",
+  "status": "PRE_SCORE_FORMAT_AMENDMENT_AFTER_HEADER_ONLY_INSPECTION",
+  "date": "2026-10-18",
+  "reason": "The first two metadata rows of the four allowed p01 E4 files show standard file-level start-time/rate headers and no per-sample timestamp column. The frozen protocol required per-sample timestamps; this narrow amendment specifies the E4 header-only path before any model scores or outcomes.",
+  "inspection_boundary": {
+    "participant": "p01 only",
+    "read": "Only the first three lines of ACC/BVP/EDA/TEMP to identify column/header structure; no task files, annotations, or model outputs.",
+    "model_scores_computed": false,
+    "scientific_outcomes_viewed": false,
+    "signal_values_used_to_select_or_tune": false
+  },
+  "replacement_rules": {
+    "time_grid": "For each signal, construct sample times as file_start_epoch + row_index / declared_sampling_rate. For ACC, require all three axis start epochs and rates to be finite, mutually equal within 1e-9 seconds and 1e-9 Hz respectively. Use the four-channel common time intersection; never interpolate or bridge rows.",
+    "accepted_rates_hz": {"ACC": 32, "BVP": 64, "EDA": 4, "TEMP": 4},
+    "rate_stop_rule": "Because the header-only format provides no sample-level timestamps to establish an alternative rate, accept only the exact native rates above. Stop before scoring for any other/missing rate.",
+    "start_alignment": "Require all four declared start epochs to align within 0.125 seconds, half a sample at the slowest 4 Hz channel. Otherwise stop before scoring; do not shift or infer clock corrections.",
+    "gap_limitation": "Header-only files do not reveal dropped samples within a stream. Do not claim packet-loss or internal-gap detection; disclose this limitation. Non-finite sample rows still fail window eligibility.",
+    "accelerometer_units": "Use standard raw Empatica E4 CSV counts, 64 counts per g, converted only if needed to match the frozen WESAD input convention. The published PhysioNet description identifies the device as Empatica E4 and documents its +/-2g range; the E4 CSV format specifies raw counts.",
+    "windowing": "Retain the original frozen rule: every complete non-overlapping 10-second window on the four-channel grid, with no task/event data or score-based selection."
+  },
+  "unchanged": [
+    "dataset and participant scope",
+    "allowed and excluded files",
+    "frozen WESAD model/checkpoint/comparator set",
+    "fault operators and severities",
+    "participant-level estimands and inference",
+    "five-percentage-point coverage margin and joint success criterion",
+    "no target labels, human ratings, retraining, normalization, calibration, or threshold fitting"
+  ],
+  "stop_conditions": [
+    "Do not score until this amendment is publicly deposited and its exact bytes verified.",
+    "If any participant's E4 header layout/rate/start alignment fails the fixed rules, exclude with a logged technical reason; stop overall if fewer than 10 participants remain.",
+    "Do not infer missing-sample detection, natural signal quality, stress/task effect, or deployment benefit from this dataset."
+  ],
+  "sources": {
+    "physionet_dataset": "https://physionet.org/content/neuro-stress-resilience-hci/1.0.0/",
+    "empatica_e4_csv_format": "https://www.empatica.com/blog/decoding-wearable-sensor-signals-what-to-expect-from-your-e4-data/"
+  }
+}
